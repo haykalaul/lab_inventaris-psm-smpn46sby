@@ -185,6 +185,13 @@ Proyek ini menggunakan lisensi MIT. Lihat file `LICENSE` untuk detail lebih lanj
 ## 👨‍💻 Tim Pengembang
 
 Dikembangkan untuk SMPN 46 Surabaya sebagai solusi modernisasi manajemen laboratorium IPA.
+Tim dan penanggung jawab Laboratorium IPA SMPN 46 Surabaya.
+- Kepala Sekolah: Ani Musafa'ah, M.Pd.
+- Kepala Laboratorium: Dra. Dwi Wulandari
+- Guru Pamong: Priambodo, S.S
+- Guru IPA: 1.Dra. Dwi Wulandari,2. Dra. Bekti Diah Widjajanti, M.Pd, 3. Dra. Mukammilah, 4. Ach. Jubaidi, S.Si,5. Serly Meinar Paramita, 6.Aditya Gama Nurcahyo
+- Tim Penyusun: Arika Nadia Zalfa, Naurah Fakhrina, Novita Azzahra Ramadhina
+
 
 ---
 
