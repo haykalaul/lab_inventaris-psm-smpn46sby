@@ -87,6 +87,11 @@ lab_inventaris-psm-smpn46sby/
 - **Charts**: Built-in KPI components
 - **Export**: XLSX for Excel export
 
+## Akses Autentikasi Akun Guru (Masuk ke Sistem)
+
+- **Email**: guru1@smpn4sby.sch.id
+- **Pass**: Guru25!
+
 ## 📋 Prasyarat
 
 - Node.js 18+
