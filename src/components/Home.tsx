@@ -81,10 +81,11 @@ export function Home({ onNavigate }: HomeProps) {
         </div>
       </div>
 
+          ### Hero Image Section
       <div
         className="rounded-3xl shadow-xl h-64 md:h-auto bg-cover bg-center"
         style={{
-          backgroundImage: 'url("docs/hero1.jpeg")',
+          backgroundImage: 'url("public/hero1.jpeg")',
         }}
         title="Laboratorium IPA"
       />
