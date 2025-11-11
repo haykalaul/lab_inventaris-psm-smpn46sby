@@ -84,7 +84,7 @@ export function Home({ onNavigate }: HomeProps) {
       <div
         className="rounded-3xl shadow-xl h-64 md:h-auto bg-cover bg-center"
         style={{
-          backgroundImage: 'url(https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg?auto=compress&cs=tinysrgb&w=800)',
+          backgroundImage: 'url("docs/hero1.jpeg")',
         }}
         title="Laboratorium IPA"
       />

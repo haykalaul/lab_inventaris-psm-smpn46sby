@@ -27,9 +27,12 @@ export function Layout({ children, currentTab, onTabChange }: LayoutProps) {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                Lab
-              </div>
+              <div
+                className="w-14 h-14 rounded-full shadow-lg bg-cover bg-center"
+                style={{
+                  backgroundImage: 'url("docs/logo.png")',
+                }}
+              ></div>
               <div>
                 <h1 className="text-xl font-bold text-gray-800">
                   LABVENTORY • SPENFOURSIX
