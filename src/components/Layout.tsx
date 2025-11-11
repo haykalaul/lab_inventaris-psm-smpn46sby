@@ -30,7 +30,7 @@ export function Layout({ children, currentTab, onTabChange }: LayoutProps) {
               <div
                 className="w-14 h-14 rounded-full shadow-lg bg-cover bg-center"
                 style={{
-                  backgroundImage: 'url("public/logo.png")',
+                  backgroundImage: 'url("/logo.png")',
                 }}
               ></div>
               <div>
