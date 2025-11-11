@@ -81,6 +81,7 @@ export function Home({ onNavigate }: HomeProps) {
         </div>
       </div>
 
+          ### Hero Image Section
       <div
         className="rounded-3xl shadow-xl h-64 md:h-auto bg-cover bg-center"
         style={{
