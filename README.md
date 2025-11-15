@@ -89,7 +89,7 @@ lab_inventaris-psm-smpn46sby/
 
 ## Akses Autentikasi Akun Guru (Masuk ke Sistem)
 
-- **Email**: guru1@smpn4sby.sch.id
+- **Email**: haykalaulil.22033@mhs.unesa.ac.id
 - **Pass**: Guru25!
 
 ## 📋 Prasyarat
