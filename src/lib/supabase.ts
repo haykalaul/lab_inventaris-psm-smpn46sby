@@ -8,6 +8,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Helpful debug: confirm the client is configured (only in dev)
+if (import.meta.env.DEV) {
+  // eslint-disable-next-line no-console
+  console.debug('[supabase] configured with URL:', supabaseUrl?.replace(/(^https?:\/\/|\/.+$)/g, '***'));
+}
 
 export type Database = {
   public: {

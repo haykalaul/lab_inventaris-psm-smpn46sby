@@ -23,6 +23,19 @@ export function ELKM() {
 
   useEffect(() => {
     loadDocuments();
+    // check that storage bucket exists and log result for debugging
+    const checkBucket = async () => {
+      try {
+        const { data, error } = await supabase.storage.getBucket('lkm-files');
+        // eslint-disable-next-line no-console
+        console.debug('[ELKM] getBucket result:', { data, error });
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[ELKM] getBucket threw:', err);
+      }
+    };
+
+    checkBucket();
   }, []);
 
   const loadDocuments = async () => {
@@ -64,25 +77,36 @@ export function ELKM() {
 
     const fileName = `${Date.now()}-${file.name}`;
     const { error: uploadError } = await supabase.storage.from('lkm-files').upload(fileName, file);
-
     if (uploadError) {
+      // eslint-disable-next-line no-console
+      console.error('uploadError', uploadError);
       alert('Gagal mengunggah file: ' + uploadError.message);
       setUploading(false);
       return;
     }
 
-    const { data: publicUrlData } = supabase.storage.from('lkm-files').getPublicUrl(fileName);
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage.from('lkm-files').createSignedUrl(fileName, 60 * 60 * 24 * 365); // 1 year expiry
+
+    if (signedUrlError) {
+      // eslint-disable-next-line no-console
+      console.error('signedUrlError', signedUrlError);
+      alert('Gagal mendapatkan URL file: ' + signedUrlError.message);
+      setUploading(false);
+      return;
+    }
 
     const { error: dbError } = await supabase.from('lkm_documents').insert([
       {
         title: formData.title,
         class_level: formData.classLevel,
-        file_url: publicUrlData.publicUrl,
+        file_url: signedUrlData.signedUrl,
         user_id: user.id,
       },
     ]);
 
     if (dbError) {
+      // eslint-disable-next-line no-console
+      console.error('dbError', dbError);
       alert('Gagal menyimpan data LKM: ' + dbError.message);
       setUploading(false);
       return;
