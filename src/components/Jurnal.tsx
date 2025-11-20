@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, Trash2, Download } from 'lucide-react';
@@ -50,8 +50,6 @@ export function Jurnal() {
   const [kpi, setKpi] = useState<KPI>({ good: 0, fair: 0, damaged: 0, lost: 0, borrowed: 0, totalJournals: 0 });
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
-  const [lastPos, setLastPos] = useState({ x: 0, y: 0 });
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -64,15 +62,39 @@ export function Jurnal() {
     returnDate: '',
   });
 
+  const addJournalItem = useCallback(() => {
+    setJournalItems((prev) => [
+      ...prev,
+      {
+        tempId: crypto.randomUUID(),
+        itemId: items[0]?.id || '',
+        itemName: items[0]?.name || '',
+        quantity: 1,
+      },
+    ]);
+  }, [items]);
+
   useEffect(() => {
     if (user) {
       loadItems();
       loadJournals();
       loadKPI();
-      addJournalItem();
-      initSignaturePad();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (journalItems.length === 0) {
+      addJournalItem();
+    }
+  }, [addJournalItem, journalItems.length]);
+
+  // Initialize signature pad after canvas is rendered
+  useEffect(() => {
+    if (canvasRef.current) {
+      const cleanup = initSignaturePad();
+      return cleanup;
+    }
+  }, []);
 
   const loadItems = async () => {
     const { data } = await supabase.from('items').select('id, name').order('name');
@@ -110,23 +132,11 @@ export function Jurnal() {
     const damaged = itemsData?.reduce((sum, i) => sum + i.damaged, 0) || 0;
     const lost = itemsData?.reduce((sum, i) => sum + i.lost, 0) || 0;
     const borrowed =
-      txData?.reduce((sum, tx) => sum + (tx.transaction_items as any[]).reduce((s, ti) => s + ti.quantity, 0), 0) || 0;
+      txData?.reduce((sum: number, tx: { transaction_items: Array<{ quantity: number }> }) => sum + tx.transaction_items.reduce((s, ti) => s + ti.quantity, 0), 0) || 0;
 
     const { count } = await supabase.from('journals').select('*', { count: 'exact', head: true });
 
     setKpi({ good, fair, damaged, lost, borrowed, totalJournals: count || 0 });
-  };
-
-  const addJournalItem = () => {
-    setJournalItems([
-      ...journalItems,
-      {
-        tempId: crypto.randomUUID(),
-        itemId: items[0]?.id || '',
-        itemName: items[0]?.name || '',
-        quantity: 1,
-      },
-    ]);
   };
 
   const removeJournalItem = (tempId: string) => {
@@ -155,9 +165,23 @@ export function Jurnal() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Set canvas DPI untuk rendering yang lebih tajam
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = 560 * dpr;
+    canvas.height = 180 * dpr;
+    canvas.style.width = '560px';
+    canvas.style.height = '180px';
+    ctx.scale(dpr, dpr);
+
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     ctx.strokeStyle = '#111827';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 560, 180);
+
+    let isDrawingLocal = false;
+    let lastPosLocal = { x: 0, y: 0 };
 
     const getPos = (e: MouseEvent | TouchEvent) => {
       const rect = canvas.getBoundingClientRect();
@@ -170,39 +194,50 @@ export function Jurnal() {
     };
 
     const handleStart = (e: MouseEvent | TouchEvent) => {
-      setIsDrawing(true);
-      setLastPos(getPos(e));
-    };
-
-    const handleMove = (e: MouseEvent | TouchEvent) => {
-      if (!isDrawing) return;
-      const pos = getPos(e);
-      ctx.beginPath();
-      ctx.moveTo(lastPos.x, lastPos.y);
-      ctx.lineTo(pos.x, pos.y);
-      ctx.stroke();
-      setLastPos(pos);
+      isDrawingLocal = true;
+      lastPosLocal = getPos(e);
       e.preventDefault();
     };
 
-    const handleEnd = () => {
-      setIsDrawing(false);
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      if (!isDrawingLocal) return;
+      
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(lastPosLocal.x, lastPosLocal.y);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+      
+      lastPosLocal = pos;
+      e.preventDefault();
     };
 
+    const handleEnd = (e: MouseEvent | TouchEvent) => {
+      isDrawingLocal = false;
+      e.preventDefault();
+    };
+
+    // Add listeners
     canvas.addEventListener('mousedown', handleStart);
     canvas.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleEnd);
-    canvas.addEventListener('touchstart', handleStart as any);
-    canvas.addEventListener('touchmove', handleMove as any, { passive: false });
-    canvas.addEventListener('touchend', handleEnd);
+    canvas.addEventListener('mouseup', handleEnd);
+    canvas.addEventListener('mouseleave', handleEnd);
+    
+    canvas.addEventListener('touchstart', handleStart as EventListener);
+    canvas.addEventListener('touchmove', handleMove as EventListener, { passive: false });
+    canvas.addEventListener('touchend', handleEnd as EventListener);
+    canvas.addEventListener('touchcancel', handleEnd as EventListener);
 
     return () => {
       canvas.removeEventListener('mousedown', handleStart);
       canvas.removeEventListener('mousemove', handleMove);
-      window.removeEventListener('mouseup', handleEnd);
-      canvas.removeEventListener('touchstart', handleStart as any);
-      canvas.removeEventListener('touchmove', handleMove as any);
-      canvas.removeEventListener('touchend', handleEnd);
+      canvas.removeEventListener('mouseup', handleEnd);
+      canvas.removeEventListener('mouseleave', handleEnd);
+      
+      canvas.removeEventListener('touchstart', handleStart as EventListener);
+      canvas.removeEventListener('touchmove', handleMove as EventListener);
+      canvas.removeEventListener('touchend', handleEnd as EventListener);
+      canvas.removeEventListener('touchcancel', handleEnd as EventListener);
     };
   };
 
@@ -220,16 +255,40 @@ export function Jurnal() {
     return canvas.toDataURL('image/png');
   };
 
+  const deleteJournal = async (journalId: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus jurnal ini?')) return;
+
+    const { error } = await supabase.from('journals').delete().eq('id', journalId);
+
+    if (error) {
+      alert('Gagal menghapus jurnal');
+      return;
+    }
+
+    alert('Jurnal berhasil dihapus!');
+    loadJournals();
+    loadKPI();
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Validate journal items FIRST - before saving anything
     if (journalItems.length === 0) {
       alert('Tambahkan minimal 1 alat!');
       return;
     }
 
+    const invalidItems = journalItems.filter(item => !item.itemId || item.itemId.trim() === '');
+    if (invalidItems.length > 0) {
+      console.error('Invalid journal items found:', invalidItems);
+      alert('Ada alat yang belum dipilih. Pastikan semua alat telah dipilih sebelum menyimpan.');
+      return;
+    }
+
     const signature = getSignatureData();
 
+    // Only proceed to save if validation passes
     const { data: journal, error: jrnError } = await supabase
       .from('journals')
       .insert([
@@ -250,6 +309,7 @@ export function Jurnal() {
       .single();
 
     if (jrnError || !journal) {
+      console.error('Error saving journal:', jrnError);
       alert('Gagal menyimpan jurnal');
       return;
     }
@@ -260,10 +320,15 @@ export function Jurnal() {
       quantity: item.quantity,
     }));
 
+    console.log('Journal items to insert:', jrnItems);
+
     const { error: itemsError } = await supabase.from('journal_items').insert(jrnItems);
 
     if (itemsError) {
+      console.error('Error saving journal items:', itemsError);
       alert('Gagal menyimpan detail jurnal');
+      // Delete journal if items failed to save
+      await supabase.from('journals').delete().eq('id', journal.id);
       return;
     }
 
@@ -407,46 +472,57 @@ export function Jurnal() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Alat yang Dipinjam</label>
             <div className="space-y-3">
-              {journalItems.map((item) => (
-                <div key={item.tempId} className="grid sm:grid-cols-3 gap-3 p-4 bg-white rounded-xl border border-gray-200">
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Alat</label>
-                    <select
-                      value={item.itemId}
-                      onChange={(e) => updateJournalItem(item.tempId, 'itemId', e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-                    >
-                      {items.map((i) => (
-                        <option key={i.id} value={i.id}>
-                          {i.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+              {journalItems.map((item) => {
+                const isInvalid = !item.itemId || item.itemId.trim() === '';
+                return (
+                  <div key={item.tempId} className={`grid sm:grid-cols-3 gap-3 p-4 bg-white rounded-xl border-2 ${isInvalid ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        Alat {isInvalid && <span className="text-red-600 font-bold">*</span>}
+                      </label>
+                      <select
+                        value={item.itemId}
+                        onChange={(e) => updateJournalItem(item.tempId, 'itemId', e.target.value)}
+                        className={`w-full px-3 py-2 rounded-lg border-2 focus:outline-none focus:ring-2 text-sm ${
+                          isInvalid
+                            ? 'border-red-300 focus:ring-red-400 focus:border-red-400'
+                            : 'border-gray-300 focus:ring-blue-400 focus:border-blue-400'
+                        }`}
+                      >
+                        <option value="">-- Pilih Alat --</option>
+                        {items.map((i) => (
+                          <option key={i.id} value={i.id}>
+                            {i.name}
+                          </option>
+                        ))}
+                      </select>
+                      {isInvalid && <p className="text-xs text-red-600 mt-1">⚠️ Wajib dipilih</p>}
+                    </div>
 
-                  <div>
-                    <label className="block text-xs text-gray-600 mb-1">Jumlah</label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={item.quantity}
-                      onChange={(e) => updateJournalItem(item.tempId, 'quantity', parseInt(e.target.value) || 1)}
-                      className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">Jumlah</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => updateJournalItem(item.tempId, 'quantity', parseInt(e.target.value) || 1)}
+                        className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
+                      />
+                    </div>
 
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      onClick={() => removeJournalItem(item.tempId)}
-                      className="w-full px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition flex items-center justify-center gap-2"
-                    >
-                      <Trash2 size={16} />
-                      Hapus
-                    </button>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={() => removeJournalItem(item.tempId)}
+                        className="w-full px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition flex items-center justify-center gap-2"
+                      >
+                        <Trash2 size={16} />
+                        Hapus
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <button
@@ -555,6 +631,8 @@ export function Jurnal() {
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Materi</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Alat</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hasil</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tanda Tangan</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -572,7 +650,27 @@ export function Jurnal() {
                       </div>
                     ))}
                   </td>
-                  <td className="px-4 py-3">{journal.result || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600">{journal.result || '-'}</td>
+                  <td className="px-4 py-3">
+                    {journal.signature ? (
+                      <img
+                        src={journal.signature}
+                        alt="Tanda Tangan"
+                        className="h-12 max-w-xs border border-gray-300 rounded"
+                      />
+                    ) : (
+                      <span className="text-gray-400">Tidak ada</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => deleteJournal(journal.id)}
+                      className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition flex items-center gap-1"
+                    >
+                      <Trash2 size={14} />
+                      Hapus
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

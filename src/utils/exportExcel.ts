@@ -46,11 +46,11 @@ export async function exportAllData() {
 
   const transactionData = [
     ['ID', 'Nama Peminjam', 'Kelas', 'Alat (qty)', 'Tanggal Pinjam', 'Tanggal Kembali', 'Status'],
-    ...(transactions || []).map((tx: any) => [
+    ...(transactions || []).map((tx: { id: string; borrower_name: string; class?: string; transaction_items: Array<{ items: { name: string }; quantity: number }>; borrow_date: string; return_date?: string; status: string }) => [
       tx.id,
       tx.borrower_name,
       tx.class || '',
-      tx.transaction_items.map((ti: any) => `${ti.items.name} (${ti.quantity})`).join('; '),
+      tx.transaction_items.map((ti) => `${ti.items.name} (${ti.quantity})`).join('; '),
       tx.borrow_date,
       tx.return_date || '',
       tx.status,
@@ -59,17 +59,18 @@ export async function exportAllData() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(transactionData), 'Log Peminjaman');
 
   const journalData = [
-    ['Tanggal', 'Jam', 'Guru', 'Kelas', 'Materi/Topik', 'Alat (qty)', 'Hasil', 'Keterangan', 'Tanggal Kembali'],
-    ...(journals || []).map((j: any) => [
+    ['Tanggal', 'Jam', 'Guru', 'Kelas', 'Materi/Topik', 'Alat (qty)', 'Hasil', 'Keterangan', 'Tanggal Kembali', 'Tanda Tangan'],
+    ...(journals || []).map((j: { date: string; time: string; teacher_name: string; class: string; topic: string; journal_items: Array<{ items: { name: string }; quantity: number }>; result?: string; notes?: string; return_date?: string; signature?: string }) => [
       j.date,
       j.time,
       j.teacher_name,
       j.class,
       j.topic,
-      j.journal_items.map((ji: any) => `${ji.items.name} (${ji.quantity})`).join('; '),
+      j.journal_items.map((ji) => `${ji.items.name} (${ji.quantity})`).join('; '),
       j.result || '',
       j.notes || '',
       j.return_date || '',
+      j.signature || '',
     ]),
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(journalData), 'Jurnal');
@@ -101,17 +102,18 @@ export async function exportJournalMonthly() {
   const wb = XLSX.utils.book_new();
 
   const journalData = [
-    ['Tanggal', 'Jam', 'Guru', 'Kelas', 'Materi/Topik', 'Alat (qty)', 'Hasil', 'Keterangan', 'Tanggal Kembali'],
-    ...(journals || []).map((j: any) => [
+    ['Tanggal', 'Jam', 'Guru', 'Kelas', 'Materi/Topik', 'Alat (qty)', 'Hasil', 'Keterangan', 'Tanggal Kembali', 'Tanda Tangan'],
+    ...(journals || []).map((j: { date: string; time: string; teacher_name: string; class: string; topic: string; journal_items: Array<{ items: { name: string }; quantity: number }>; result?: string; notes?: string; return_date?: string; signature?: string }) => [
       j.date,
       j.time,
       j.teacher_name,
       j.class,
       j.topic,
-      j.journal_items.map((ji: any) => `${ji.items.name} (${ji.quantity})`).join('; '),
+      j.journal_items.map((ji) => `${ji.items.name} (${ji.quantity})`).join('; '),
       j.result || '',
       j.notes || '',
       j.return_date || '',
+      j.signature || '',
     ]),
   ];
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(journalData), 'Jurnal');
