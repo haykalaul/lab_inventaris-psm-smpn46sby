@@ -105,20 +105,12 @@ export function Jurnal() {
       .select('transaction_items(quantity)')
       .eq('status', 'Dipinjam');
 
-    interface TransactionItem {
-      quantity: number;
-    }
-
-    interface Transaction {
-      transaction_items: TransactionItem[];
-    }
-
     const good = itemsData?.reduce((sum, i) => sum + i.good_condition, 0) || 0;
     const fair = itemsData?.reduce((sum, i) => sum + i.fair_condition, 0) || 0;
     const damaged = itemsData?.reduce((sum, i) => sum + i.damaged, 0) || 0;
     const lost = itemsData?.reduce((sum, i) => sum + i.lost, 0) || 0;
     const borrowed =
-      (txData as Transaction[])?.reduce((sum, tx) => sum + tx.transaction_items.reduce((s, ti) => s + ti.quantity, 0), 0) || 0;
+      txData?.reduce((sum, tx) => sum + (tx.transaction_items as any[]).reduce((s, ti) => s + ti.quantity, 0), 0) || 0;
 
     const { count } = await supabase.from('journals').select('*', { count: 'exact', head: true });
 
@@ -165,7 +157,6 @@ export function Jurnal() {
 
     ctx.lineWidth = 2;
     ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
     ctx.strokeStyle = '#111827';
 
     const getPos = (e: MouseEvent | TouchEvent) => {
@@ -198,24 +189,20 @@ export function Jurnal() {
       setIsDrawing(false);
     };
 
-    const handleStartListener = handleStart as EventListenerOrEventListenerObject;
-    const handleMoveListener = handleMove as EventListenerOrEventListenerObject;
-    const handleEndListener = handleEnd as EventListenerOrEventListenerObject;
-
-    canvas.addEventListener('mousedown', handleStartListener);
-    canvas.addEventListener('mousemove', handleMoveListener);
-    window.addEventListener('mouseup', handleEndListener);
-    canvas.addEventListener('touchstart', handleStartListener);
-    canvas.addEventListener('touchmove', handleMoveListener, { passive: false });
-    canvas.addEventListener('touchend', handleEndListener);
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('mousemove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    canvas.addEventListener('touchstart', handleStart as any);
+    canvas.addEventListener('touchmove', handleMove as any, { passive: false });
+    canvas.addEventListener('touchend', handleEnd);
 
     return () => {
-      canvas.removeEventListener('mousedown', handleStartListener);
-      canvas.removeEventListener('mousemove', handleMoveListener);
-      window.removeEventListener('mouseup', handleEndListener);
-      canvas.removeEventListener('touchstart', handleStartListener);
-      canvas.removeEventListener('touchmove', handleMoveListener);
-      canvas.removeEventListener('touchend', handleEndListener);
+      canvas.removeEventListener('mousedown', handleStart);
+      canvas.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('mouseup', handleEnd);
+      canvas.removeEventListener('touchstart', handleStart as any);
+      canvas.removeEventListener('touchmove', handleMove as any);
+      canvas.removeEventListener('touchend', handleEnd);
     };
   };
 
@@ -238,13 +225,6 @@ export function Jurnal() {
 
     if (journalItems.length === 0) {
       alert('Tambahkan minimal 1 alat!');
-      return;
-    }
-
-    // Validasi bahwa semua item memiliki itemId yang valid
-    const invalidItems = journalItems.filter(item => !item.itemId || item.itemId.trim() === '');
-    if (invalidItems.length > 0) {
-      alert('Pastikan semua alat telah dipilih dengan benar!');
       return;
     }
 
@@ -511,26 +491,22 @@ export function Jurnal() {
             />
           </div>
 
-          <div style={{ gridColumn: '1 / -1' }}>
-            <label>Tanda Tangan</label>
-            <div className="sig-tools">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tanda Tangan</label>
+            <div className="space-y-2">
               <canvas
                 ref={canvasRef}
-                id="sig"
-                className="sig-pad"
                 width={560}
                 height={180}
-                style={{ touchAction: 'none' }}
+                className="border border-dashed border-gray-300 rounded-xl bg-white w-full touch-none"
               />
-              <div className="toolbar">
-                <button
-                  className="btn"
-                  type="button"
-                  onClick={clearSignature}
-                >
-                  Bersihkan
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={clearSignature}
+                className="px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-xl hover:bg-gray-300 transition"
+              >
+                Bersihkan
+              </button>
             </div>
           </div>
 
@@ -572,16 +548,13 @@ export function Jurnal() {
           <table className="w-full">
             <thead className="bg-pink-50">
               <tr>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hari Tanggal</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tanggal</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Jam</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Guru</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Kelas</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Materi/Topik</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Alat (qty)</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Materi</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Alat</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Hasil</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Keterangan</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tanggal Kembali</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Tanda Tangan</th>
               </tr>
             </thead>
             <tbody>
@@ -600,15 +573,6 @@ export function Jurnal() {
                     ))}
                   </td>
                   <td className="px-4 py-3">{journal.result || '-'}</td>
-                  <td className="px-4 py-3">{journal.notes || '-'}</td>
-                  <td className="px-4 py-3">{journal.return_date || '-'}</td>
-                  <td className="px-4 py-3">
-                    {journal.signature ? (
-                      <img src={journal.signature} alt="Tanda Tangan" className="max-w-32 max-h-16 border border-gray-300" />
-                    ) : (
-                      '-'
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>
