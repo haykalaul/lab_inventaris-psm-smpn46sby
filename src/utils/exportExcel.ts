@@ -45,23 +45,12 @@ export async function exportAllData() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(inventoryData), 'Inventaris');
 
   const transactionData = [
-    ['ID', 'Nama Peminjam', 'Kelas', 'Alat', 'Tanggal Pinjam', 'Tanggal Kembali', 'Status'],
-    ...(transactions || []).map((tx: { 
-      id: number; 
-      borrower_name: string; 
-      class?: string; 
-      transaction_items: { 
-        items: { name: string; id: number }; // Specify the type for items
-        quantity: number 
-      }[]; 
-      borrow_date: string; 
-      return_date?: string; 
-      status: string 
-    }) => [
+    ['ID', 'Nama Peminjam', 'Kelas', 'Alat (qty)', 'Tanggal Pinjam', 'Tanggal Kembali', 'Status'],
+    ...(transactions || []).map((tx: { id: string; borrower_name: string; class?: string; transaction_items: Array<{ items: { name: string }; quantity: number }>; borrow_date: string; return_date?: string; status: string }) => [
       tx.id,
       tx.borrower_name,
       tx.class || '',
-      tx.transaction_items.map((ti: { items: { name: string }; quantity: number }) => `${ti.items.name} (${ti.quantity})`).join('; '),
+      tx.transaction_items.map((ti) => `${ti.items.name} (${ti.quantity})`).join('; '),
       tx.borrow_date,
       tx.return_date || '',
       tx.status,
@@ -70,28 +59,14 @@ export async function exportAllData() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(transactionData), 'Log Peminjaman');
 
   const journalData = [
-    ['Hari Tanggal', 'Jam', 'Guru', 'Kelas', 'Materi/Topik', 'Alat', 'Hasil', 'Keterangan', 'Tanggal Kembali', 'TTD (base64)'],
-    ...(journals || []).map((j: { 
-      date: string; 
-      time: string; 
-      teacher_name: string; 
-      class: string; 
-      topic: string; 
-      journal_items: { 
-        items: { name: string }; 
-        quantity: number 
-      }[]; 
-      result?: string; 
-      notes?: string; 
-      return_date?: string; 
-      signature?: string; 
-    }) => [
+    ['Tanggal', 'Jam', 'Guru', 'Kelas', 'Materi/Topik', 'Alat (qty)', 'Hasil', 'Keterangan', 'Tanggal Kembali', 'Tanda Tangan'],
+    ...(journals || []).map((j: { date: string; time: string; teacher_name: string; class: string; topic: string; journal_items: Array<{ items: { name: string }; quantity: number }>; result?: string; notes?: string; return_date?: string; signature?: string }) => [
       j.date,
       j.time,
       j.teacher_name,
       j.class,
       j.topic,
-      j.journal_items.map((ji: { items: { name: string }; quantity: number }) => `${ji.items.name} (${ji.quantity})`).join('; '),
+      j.journal_items.map((ji) => `${ji.items.name} (${ji.quantity})`).join('; '),
       j.result || '',
       j.notes || '',
       j.return_date || '',
@@ -127,28 +102,14 @@ export async function exportJournalMonthly() {
   const wb = XLSX.utils.book_new();
 
   const journalData = [
-    ['Hari Tanggal', 'Jam', 'Guru', 'Kelas', 'Materi/Topik', 'Alat', 'Hasil', 'Keterangan', 'Tanggal Kembali', 'TTD (base64)'],
-    ...(journals || []).map((j: { 
-      date: string; 
-      time: string; 
-      teacher_name: string; 
-      class: string; 
-      topic: string; 
-      journal_items: { 
-        items: { name: string }; 
-        quantity: number 
-      }[]; 
-      result?: string; 
-      notes?: string; 
-      return_date?: string; 
-      signature?: string; 
-    }) => [
+    ['Tanggal', 'Jam', 'Guru', 'Kelas', 'Materi/Topik', 'Alat (qty)', 'Hasil', 'Keterangan', 'Tanggal Kembali', 'Tanda Tangan'],
+    ...(journals || []).map((j: { date: string; time: string; teacher_name: string; class: string; topic: string; journal_items: Array<{ items: { name: string }; quantity: number }>; result?: string; notes?: string; return_date?: string; signature?: string }) => [
       j.date,
       j.time,
       j.teacher_name,
       j.class,
       j.topic,
-      j.journal_items.map((ji: { items: { name: string }; quantity: number }) => `${ji.items.name} (${ji.quantity})`).join('; '),
+      j.journal_items.map((ji) => `${ji.items.name} (${ji.quantity})`).join('; '),
       j.result || '',
       j.notes || '',
       j.return_date || '',
