@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { FileText, Upload } from 'lucide-react';
+import { FileText, Upload, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LKMDocument {
@@ -8,6 +8,7 @@ interface LKMDocument {
   title: string;
   class_level: '7' | '8' | '9';
   file_url: string;
+  user_id: string;
   created_at: string;
 }
 
@@ -20,23 +21,20 @@ export function ELKM() {
   });
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     loadDocuments();
-    // check that storage bucket exists and log result for debugging
-    const checkBucket = async () => {
-      try {
-        const { data, error } = await supabase.storage.getBucket('lkm-files');
-        // eslint-disable-next-line no-console
-        console.debug('[ELKM] getBucket result:', { data, error });
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('[ELKM] getBucket threw:', err);
-      }
-    };
-
-    checkBucket();
   }, []);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => {
+        setNotification(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const loadDocuments = async () => {
     const { data } = await supabase
@@ -119,6 +117,44 @@ export function ELKM() {
     loadDocuments();
   };
 
+  const handleDelete = async (doc: LKMDocument) => {
+    if (!user || user.id !== doc.user_id) {
+      alert('Anda tidak memiliki izin untuk menghapus dokumen ini.');
+      return;
+    }
+
+    if (!confirm(`Apakah Anda yakin ingin menghapus "${doc.title}"?`)) {
+      return;
+    }
+
+    try {
+      // Delete from storage
+      const { error: storageError } = await supabase.storage.from('lkm-files').remove([doc.file_url.split('/').pop() || '']);
+      if (storageError) {
+        // eslint-disable-next-line no-console
+        console.error('storageError', storageError);
+        alert('Gagal menghapus file dari penyimpanan: ' + storageError.message);
+        return;
+      }
+
+      // Delete from database
+      const { error: dbError } = await supabase.from('lkm_documents').delete().eq('id', doc.id);
+      if (dbError) {
+        // eslint-disable-next-line no-console
+        console.error('dbError', dbError);
+        alert('Gagal menghapus data LKM: ' + dbError.message);
+        return;
+      }
+
+      setNotification({ message: 'LKM sudah terhapus!', type: 'success' });
+      loadDocuments();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('deleteError', error);
+      alert('Terjadi kesalahan saat menghapus LKM.');
+    }
+  };
+
   const documentsByClass = {
     '7': documents.filter((doc) => doc.class_level === '7'),
     '8': documents.filter((doc) => doc.class_level === '8'),
@@ -127,6 +163,15 @@ export function ELKM() {
 
   return (
     <div className="bg-white/90 rounded-3xl shadow-xl p-8">
+      {notification && (
+        <div className={`mb-4 p-4 rounded-xl ${
+          notification.type === 'success'
+            ? 'bg-green-100 border border-green-400 text-green-700'
+            : 'bg-red-100 border border-red-400 text-red-700'
+        }`}>
+          {notification.message}
+        </div>
+      )}
       <h2 className="text-3xl font-bold text-gray-800 mb-4">E-LKM</h2>
       <p className="text-gray-600 mb-8">
         Lembar Kerja Murid (LKM) yang memandu siswa untuk melakukan praktikum, berisi petunjuk langkah kerja, tujuan,
@@ -142,16 +187,25 @@ export function ELKM() {
                 <li className="text-gray-500 text-sm">Belum ada dokumen</li>
               ) : (
                 documentsByClass[classLevel].map((doc) => (
-                  <li key={doc.id}>
+                  <li key={doc.id} className="flex items-center justify-between">
                     <a
                       href={doc.file_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:underline"
+                      className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:underline flex-1"
                     >
                       <FileText size={16} />
                       <span className="text-sm">{doc.title}</span>
                     </a>
+                    {user && user.id === doc.user_id && (
+                      <button
+                        onClick={() => handleDelete(doc)}
+                        className="ml-2 text-red-500 hover:text-red-700 p-1"
+                        title="Hapus dokumen"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                   </li>
                 ))
               )}

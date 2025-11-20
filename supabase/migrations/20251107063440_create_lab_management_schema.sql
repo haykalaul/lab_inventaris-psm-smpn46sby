@@ -291,8 +291,11 @@ CREATE INDEX IF NOT EXISTS idx_lkm_class ON lkm_documents(class_level);
 
 -- Insert seed data
 INSERT INTO items (name, category, good_condition, fair_condition, damaged, lost, location)
-VALUES 
+VALUES
   ('Mikroskop', 'Biologi', 15, 5, 0, 0, 'Lemari B2'),
   ('Gelas Ukur 100 ml', 'Kimia', 20, 2, 1, 0, 'Lemari A1'),
   ('Dinamometer', 'Fisika', 6, 1, 1, 0, 'Rak C1')
 ON CONFLICT DO NOTHING;
+
+-- Add file_name column to lkm_documents for delete functionality
+ALTER TABLE lkm_documents ADD COLUMN IF NOT EXISTS file_name text;
