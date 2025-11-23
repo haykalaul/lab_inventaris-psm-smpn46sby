@@ -189,7 +189,7 @@ Kami menerima kontribusi untuk meningkatkan sistem ini!
 - Ikuti standar kode yang ada
 - Tambahkan komentar pada kode baru
 - Update dokumentasi jika diperlukan
-- Test perubahan sebelum submit PR
+- Test perubahan sebelum submit Pull Req
 
 ## 📝 Lisensi
 
