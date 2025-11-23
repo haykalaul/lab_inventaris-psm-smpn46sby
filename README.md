@@ -170,7 +170,7 @@ Sistem menggunakan PostgreSQL dengan tabel berikut:
 - **journal_items**: Alat yang digunakan per jurnal
 - **lkm_documents**: Dokumen E-LKM
 
-![Database Schema](docs/supabase_schema.png)
+![Database Schema](docs/supabase-schema.png)
 
 Bisa didownload di [sini](docs/inventaris.sql).
 
@@ -189,7 +189,7 @@ Kami menerima kontribusi untuk meningkatkan sistem ini!
 - Ikuti standar kode yang ada
 - Tambahkan komentar pada kode baru
 - Update dokumentasi jika diperlukan
-- Test perubahan sebelum submit PR
+- Test perubahan sebelum submit Pull Req
 
 ## 📝 Lisensi
 
