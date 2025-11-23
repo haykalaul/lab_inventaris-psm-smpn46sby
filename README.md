@@ -78,6 +78,10 @@ lab_inventaris-psm-smpn46sby/
 └── README.md                        # Documentation
 ```
 
+## Screenshoot Dokumentasi
+![Screenshot](docs/hero1.png)
+![Screenshot](docs/jurnal.png)
+
 ## 🚀 Teknologi yang Digunakan
 
 - **Frontend**: React 18 + TypeScript + Vite
@@ -165,6 +169,10 @@ Sistem menggunakan PostgreSQL dengan tabel berikut:
 - **journals**: Jurnal kegiatan laboratorium
 - **journal_items**: Alat yang digunakan per jurnal
 - **lkm_documents**: Dokumen E-LKM
+
+![Database Schema](docs/supabase_schema.png)
+
+Bisa didownload di [sini](docs/inventaris.sql).
 
 ## 🤝 Berkontribusi
 
