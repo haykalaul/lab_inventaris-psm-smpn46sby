@@ -5,9 +5,33 @@ export function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordRequirements, setPasswordRequirements] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false,
+  });
   const { signIn, signUp } = useAuth();
+
+  const checkPasswordRequirements = (password: string) => {
+    setPasswordRequirements({
+      length: password.length >= 6,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    });
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    checkPasswordRequirements(newPassword);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,15 +85,41 @@ export function Login() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={handlePasswordChange}
+                required
+                minLength={6}
+                className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? '🙈' : '👁️'}
+              </button>
+            </div>
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center text-xs">
+                {passwordRequirements.length ? '✓' : '✗'} Minimal 6 karakter
+              </div>
+              <div className="flex items-center text-xs">
+                {passwordRequirements.uppercase ? '✓' : '✗'} Huruf besar (A-Z)
+              </div>
+              <div className="flex items-center text-xs">
+                {passwordRequirements.lowercase ? '✓' : '✗'} Huruf kecil (a-z)
+              </div>
+              <div className="flex items-center text-xs">
+                {passwordRequirements.number ? '✓' : '✗'} Angka (0-9)
+              </div>
+              <div className="flex items-center text-xs">
+                {passwordRequirements.special ? '✓' : '✗'} Karakter khusus (!@#$%^&*)
+              </div>
+            </div>
           </div>
 
           {error && (
