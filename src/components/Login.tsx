@@ -49,7 +49,7 @@ export function Login() {
         setError('Akun berhasil dibuat! Silakan login.');
         setIsLogin(true);
       }
-    } catch (err) {
+    } catch {
       setError('Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setLoading(false);
@@ -58,15 +58,15 @@ export function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-pink-50 to-purple-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+      <div className="max-w-sm w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-6">
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold text-gray-800 mb-1">
             LABVENTORY • SPENFOURSIX
           </h1>
           <p className="text-gray-600 text-sm">Smart Lab Management System</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
@@ -76,7 +76,7 @@ export function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
               placeholder="guru@smpn46sby.sch.id"
             />
           </div>
@@ -92,7 +92,7 @@ export function Login() {
                 onChange={handlePasswordChange}
                 required
                 minLength={6}
-                className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                className="w-full px-4 py-2 pr-12 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="••••••••"
               />
               <button
@@ -103,7 +103,7 @@ export function Login() {
                 {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
-            <div className="mt-2 space-y-1">
+            <div className="mt-2 space-y-0.5">
               <div className="flex items-center text-xs">
                 {passwordRequirements.length ? '✓' : '✗'} Minimal 6 karakter
               </div>
@@ -137,7 +137,7 @@ export function Login() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-4 text-center">
           <button
             onClick={() => {
               setIsLogin(!isLogin);
@@ -149,7 +149,7 @@ export function Login() {
           </button>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-gray-200">
+        <div className="mt-6 pt-4 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
             Sistem ini hanya untuk Guru dan Laboran SMPN 46 Surabaya
           </p>
