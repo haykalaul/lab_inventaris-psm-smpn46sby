@@ -1,10 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
+
+// Zod schemas for validation
+const loginSchema = z.object({
+  email: z.string().email('Email tidak valid'),
+  password: z.string().min(1, 'Password diperlukan'),
+});
+
+const registerSchema = z.object({
+  email: z.string().email('Email tidak valid'),
+  password: z
+    .string()
+    .min(6, 'Password minimal 6 karakter')
+    .regex(/[A-Z]/, 'Password harus mengandung huruf besar')
+    .regex(/[a-z]/, 'Password harus mengandung huruf kecil')
+    .regex(/\d/, 'Password harus mengandung angka')
+    .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Password harus mengandung karakter khusus'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 export function Login() {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -17,37 +38,54 @@ export function Login() {
   });
   const { signIn, signUp } = useAuth();
 
-  const checkPasswordRequirements = (password: string) => {
-    setPasswordRequirements({
-      length: password.length >= 6,
-      uppercase: /[A-Z]/.test(password),
-      lowercase: /[a-z]/.test(password),
-      number: /\d/.test(password),
-      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
-    });
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    reset,
+  } = useForm<LoginFormData | RegisterFormData>({
+    resolver: zodResolver(isLogin ? loginSchema : registerSchema),
+  });
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newPassword = e.target.value;
-    setPassword(newPassword);
-    checkPasswordRequirements(newPassword);
-  };
+  const watchedPassword = watch('password');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Update password requirements based on watched password
+  useEffect(() => {
+    if (watchedPassword) {
+      setPasswordRequirements({
+        length: watchedPassword.length >= 6,
+        uppercase: /[A-Z]/.test(watchedPassword),
+        lowercase: /[a-z]/.test(watchedPassword),
+        number: /\d/.test(watchedPassword),
+        special: /[!@#$%^&*(),.?":{}|<>]/.test(watchedPassword),
+      });
+    } else {
+      setPasswordRequirements({
+        length: false,
+        uppercase: false,
+        lowercase: false,
+        number: false,
+        special: false,
+      });
+    }
+  }, [watchedPassword]);
+
+  const onSubmit = async (data: LoginFormData | RegisterFormData) => {
     setError('');
     setLoading(true);
 
     try {
       const { error } = isLogin
-        ? await signIn(email, password)
-        : await signUp(email, password);
+        ? await signIn(data.email, data.password)
+        : await signUp(data.email, data.password);
 
       if (error) {
         setError(error.message);
       } else if (!isLogin) {
         setError('Akun berhasil dibuat! Silakan login.');
         setIsLogin(true);
+        reset();
       }
     } catch {
       setError('Terjadi kesalahan. Silakan coba lagi.');
@@ -66,19 +104,20 @@ export function Login() {
           <p className="text-gray-600 text-sm">Smart Lab Management System</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form key={isLogin ? 'login' : 'register'} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
             </label>
             <input
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              {...register('email')}
               className="w-full px-4 py-2 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
               placeholder="guru@smpn46sby.sch.id"
             />
+            {errors.email && (
+              <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+            )}
           </div>
 
           <div>
@@ -88,10 +127,7 @@ export function Login() {
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={handlePasswordChange}
-                required
-                minLength={6}
+                {...register('password')}
                 className="w-full px-4 py-2 pr-12 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
                 placeholder="••••••••"
               />
@@ -103,6 +139,9 @@ export function Login() {
                 {showPassword ? '🙈' : '👁️'}
               </button>
             </div>
+            {errors.password && (
+              <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+            )}
             <div className="mt-2 space-y-0.5">
               <div className="flex items-center text-xs">
                 {passwordRequirements.length ? '✓' : '✗'} Minimal 6 karakter
