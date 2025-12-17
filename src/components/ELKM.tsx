@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { FileText, Upload, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { logActivity } from '../utils/auditLogger';
 
 interface LKMDocument {
   id: string;
@@ -110,6 +111,7 @@ export function ELKM() {
       return;
     }
 
+    logActivity('UPLOAD_DOCUMENT', { title: formData.title, classLevel: formData.classLevel });
     alert('LKM berhasil diunggah!');
     setFormData({ title: '', classLevel: '7' });
     setFile(null);
@@ -146,6 +148,7 @@ export function ELKM() {
         return;
       }
 
+      logActivity('DELETE_DOCUMENT', { title: doc.title, classLevel: doc.class_level });
       setNotification({ message: 'LKM sudah terhapus!', type: 'success' });
       loadDocuments();
     } catch (error) {

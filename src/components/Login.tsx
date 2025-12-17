@@ -83,9 +83,12 @@ export function Login() {
       if (error) {
         setError(error.message);
       } else if (!isLogin) {
+        logActivity('REGISTER', { email: data.email });
         setError('Akun berhasil dibuat! Silakan login.');
         setIsLogin(true);
         reset();
+      } else {
+        logActivity('LOGIN', { email: data.email });
       }
     } catch {
       setError('Terjadi kesalahan. Silakan coba lagi.');
