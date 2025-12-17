@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { Search, Plus, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { logActivity } from '../utils/auditLogger';
 
 interface Item {
   id: string;
@@ -95,6 +96,7 @@ export function Inventaris() {
       ]);
 
       if (!error) {
+        logActivity('ADD_ITEM', { name: formData.name, category: formData.category, good_condition: formData.good_condition, fair_condition: formData.fair_condition, damaged: formData.damaged, lost: formData.lost, location: formData.location });
         alert('Data alat berhasil ditambahkan!');
       }
     }
@@ -123,6 +125,10 @@ export function Inventaris() {
     const { error } = await supabase.from('items').delete().eq('id', id);
 
     if (!error) {
+      const item = items.find(i => i.id === id);
+      if (item) {
+        logActivity('DELETE_ITEM', { id, name: item.name, category: item.category });
+      }
       alert('Item berhasil dihapus!');
       loadItems();
     }
