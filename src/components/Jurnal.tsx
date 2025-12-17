@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Plus, Trash2, Download } from 'lucide-react';
 import { exportAllData, exportJournalMonthly } from '../utils/exportExcel';
+import { logActivity } from '../utils/auditLogger';
 
 interface Item {
   id: string;
@@ -391,14 +392,20 @@ export function Jurnal() {
 
       <div className="flex flex-wrap gap-3">
         <button
-          onClick={() => exportAllData()}
+          onClick={() => {
+            exportAllData();
+            logActivity('EXPORT_ALL_DATA', { component: 'Jurnal' });
+          }}
           className="px-4 py-2 bg-green-500 text-white font-semibold rounded-xl hover:bg-green-600 transition shadow-md flex items-center gap-2"
         >
           <Download size={18} />
           Ekspor Excel (Semua Sheet)
         </button>
         <button
-          onClick={() => exportJournalMonthly()}
+          onClick={() => {
+            exportJournalMonthly();
+            logActivity('EXPORT_JOURNAL_MONTHLY', { component: 'Jurnal' });
+          }}
           className="px-4 py-2 bg-blue-500 text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md flex items-center gap-2"
         >
           <Download size={18} />

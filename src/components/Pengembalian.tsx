@@ -152,6 +152,7 @@ export function Pengembalian() {
       return;
     }
 
+    logActivity('RETURN_ITEMS', { transactionId: selectedTxId, borrowerName: tx.borrower_name, class: tx.class, returnDate, returnTime, items: returnItems });
     alert('Pengembalian berhasil dicatat!');
     loadTransactions();
     setReturnItems([]);
